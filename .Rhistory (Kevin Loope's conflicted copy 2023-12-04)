@@ -1,0 +1,512 @@
+aBurnSp = mBurnSp*((mBurnSp*(1-mBurnSp)/varBurnSp^2)-1)
+bBurnSp = (1-mBurnSp)*((mBurnSp*(1-mBurnSp)/varBurnSp^2)-1)
+BurnSp = matrix(rbeta(r*t,aBurnSp,bBurnSp),r,1)
+BurnSpi = matrix(0,r,1)
+ABurnSpi = matrix(0,r,1)
+BBurnSpi = matrix(0,r,1)
+BurnSpit = matrix(0,r,t)
+#Summer
+mBurnSu = BurnSu_45*-1 #multiple by -1 to make values positive
+varBurnSu = BurnSu_45_SD
+aBurnSu = mBurnSu*((mBurnSu*(1-mBurnSu)/varBurnSu^2)-1)
+bBurnSu = (1-mBurnSu)*((mBurnSu*(1-mBurnSu)/varBurnSu^2)-1)
+BurnSu = matrix(rbeta(r*t,aBurnSu,bBurnSu),r,1)
+BurnSui = matrix(0,r,1)
+ABurnSui = matrix(0,r,1)
+BBurnSui = matrix(0,r,1)
+BurnSuit = matrix(0,r,t)
+}
+# Prescribed fire probability at sites through time
+mFireProb = BurnProb
+varFireProb = 0.015
+aFireProb = mFireProb*((mFireProb*(1-mFireProb)/varFireProb^2)-1)
+bFireProb = (1-mFireProb)*((mFireProb*(1-mFireProb)/varFireProb^2)-1)
+FireProb = matrix(rbeta(r*t,aFireProb,bFireProb),r,1)
+FireProbi = matrix(0,r,1)
+AFireProbi = matrix(0,r,1)
+BFireProbi = matrix(0,r,1)
+FireProbit = matrix(0,r,t)
+FireProbChangeit = matrix(0,r,t)
+FireProbUrbit = matrix(0,r,t)
+# Prescribed fire at sites (yes/no)
+Fire = matrix(0,r,t)
+# Fire effect on survival
+mFireEffect = FireEffectOnSurvival*-1 #make positive for simulation
+varFireEffect = FireEffectSD
+aFireEffect = mFireEffect*((mFireEffect*(1-mFireEffect)/varFireEffect^2)-1)
+bFireEffect = (1-mFireEffect)*((mFireEffect*(1-mFireEffect)/varFireEffect^2)-1)
+FireEffect = matrix(rbeta(r*t,aFireEffect,bFireEffect),r,1)
+FireEffecti = matrix(0,r,1)
+AFireEffecti = matrix(0,r,1)
+BFireEffecti = matrix(0,r,1)
+FireEffectij = matrix(0,r,t)
+#### C) Replication loop; draws replicate-level means for each demographic parameter'
+####     to model parametric uncertainty of parameters
+for (i in 1:r){
+#### Site-level demographic rates
+# Probability of females breeding
+APfbi[i] = 100*Pfb[i]
+BPfbi[i] = 100*(1-Pfb[i])
+# Fecundity of adult females
+Fi[i] = rlnorm(1,getParmsLognormForMoments(muF,sdF^2)[1],
+getParmsLognormForMoments(muF,sdF^2)[2])
+# Probability of nest survival from predation
+APnsi[i] = 100*Pns[i]
+BPnsi[i] = 100*(1-Pns[i])
+# Probability of eggs hatching (hatching success)
+APhi[i] = 100*Ph[i]
+BPhi[i] = 100*(1-Ph[i])
+# Survival of hatchling females
+AShi[i] = 100*Shi[i]
+BShi[i] = 100*(1-Shi[i])
+# Survival of juvenile females
+ASji[i] = 100*Sji[i]
+BSji[i] = 100*(1-Sji[i])
+# Survival of adult females
+ASai[i] = 100*Sai[i]
+BSai[i] = 100*(1-Sai[i])
+# Age of maturing from juvenile to adult female
+Tjai[i] = rlnorm(1,getParmsLognormForMoments(muTja,sdTja^2)[1],
+getParmsLognormForMoments(muTja,sdTja^2)[2])
+# Initial juvenile abundance
+if(muNj > 0) Nj[i,1] = round(rlnorm(1,getParmsLognormForMoments(muNj,sdNj^2)[1],
+getParmsLognormForMoments(muNj,sdNj^2)[2])) else Nj[i,1] = 0
+# Initial female abundance
+if (muNa > 0) Na[i,1] = round(rlnorm(1,getParmsLognormForMoments(muNa,sdNa^2)[1],
+getParmsLognormForMoments(muNa,sdNa^2)[2])) else Na[i,1] = 0
+# Initial metapopulation abundance
+if (muNm > 0) Nm[i,1] = round(rlnorm(1,getParmsLognormForMoments(muNm,sdNm^2)[1],
+getParmsLognormForMoments(muNm,sdNm^2)[2])) else Nm[i,1] = 0
+# Probability of immigration
+if (mImm > 0){
+AImmi[i] = 100*Immi[i]
+BImmi[i] = 100*(1-Immi[i])
+}
+### Site-level abiotic features
+# Elevation
+elevi[i] = elev
+### Prescribed fire features
+# Initial days available for winter burn
+DaysWit[i,1] = round(rlnorm(1,getParmsLognormForMoments(mDaysW,varDaysW^2)[1],
+getParmsLognormForMoments(mDaysW,varDaysW^2)[2]))
+# Initial days available for spring burn
+DaysSpit[i,1] = round(rlnorm(1,getParmsLognormForMoments(mDaysSp,varDaysSp^2)[1],
+getParmsLognormForMoments(mDaysSp,varDaysSp^2)[2]))
+# Initial days available for summer burn
+DaysSuit[i,1] = round(rlnorm(1,getParmsLognormForMoments(mDaysSu,varDaysSu^2)[1],
+getParmsLognormForMoments(mDaysSu,varDaysSu^2)[2]))
+# Climate-change effects on prescribed fire
+ABurnWi[i] = 100*BurnW[i]	#Winter
+BBurnWi[i] = 100*(1-BurnW[i])
+ABurnSpi[i] = 100*BurnSp[i]	#Spring
+BBurnSpi[i] = 100*(1-BurnSp[i])
+ABurnSui[i] = 100*BurnSu[i]	#Summer
+BBurnSui[i] = 100*(1-BurnSu[i])
+# Prescribed fire probabilities through time
+AFireProbi[i] = 100*FireProb[i]
+BFireProbi[i] = 100*(1-FireProb[i])
+# Fire effect on survival
+AFireEffecti[i] = 100*FireEffect[i]
+BFireEffecti[i] = 100*(1-FireEffect[i])
+#### Projection loop; drawing annual demographic rates in each year from 1:t
+####  to simulate temporal stochasticity
+for(j in 1:t){
+## Abiotic parameters
+elevit[i,j] = elevi[i]-SLR[[1]]*j/t
+## Management parameters
+BurnWit[i,j] = rbeta(1,ABurnWi[i],BBurnWi[i])     #Effect of climate change on winter burn days
+BurnSpit[i,j] = rbeta(1,ABurnSpi[i],BBurnSpi[i])  #Effect on spring burn days
+BurnSuit[i,j] = rbeta(1,ABurnSui[i],BBurnSui[i])  #Effect on summer burn days
+if (j >= 2 & FIRE == 4.5){ # Fire management scenario of DECREASING fire
+DaysWit[i,j] = round(DaysWit[i,1])+round(DaysWit[i,1])*((BurnWit[i,j-1]*j)/t) # bit more fire in winter
+DaysSpit[i,j] = round(DaysSpit[i,1])+round(DaysSpit[i,1])*((-1*BurnSpit[i,j-1]*j)/t) #multiple by -1 to make negative effect in spring
+DaysSuit[i,j] = round(DaysSuit[i,1])+round(DaysSuit[i,1])*((-1*BurnSuit[i,j-1]*j)/t) #multiple by -1 to make negative effect in summer
+} else {
+if (j >= 2 & FIRE == 8.5){ # Fire management scenario of VERY DECREASING fire
+DaysWit[i,j] = round(DaysWit[i,1])+round(DaysWit[i,1])*((BurnWit[i,j-1]*j)/t) # more fire in winter
+DaysSpit[i,j] = round(DaysSpit[i,1])+round(DaysSpit[i,1])*((-1*BurnSpit[i,j-1]*j)/t) #multiple by -1 to make negative effect in spring
+DaysSuit[i,j] = round(DaysSuit[i,1])+round(DaysSuit[i,1])*((-1*BurnSuit[i,j-1]*j)/t) #multiple by -1 to make negative effect in summer
+} else {
+if (j >= 2 & FIRE == 0){ # Fire management scenario of NO CHANGE in fire
+DaysWit[i,j] = round(DaysWit[i,1]) #+((BurnWit[i,j-1]*j)/t))
+DaysSpit[i,j] = round(DaysSpit[i,1]) #+((-1*BurnSpit[i,j-1]*j)/t)) #multiple by -1 to make burn rates negative again
+DaysSuit[i,j] = round(DaysSuit[i,1]) #+((-1*BurnSuit[i,j-1]*j)/t)) #multiple by -1 to make burn rates negative again
+} else {
+if (j >= 2 & FIRE == -4.5) { # Fire management scenario of INCREASING fire
+DaysWit[i,j] = round(DaysWit[i,1])+round(DaysWit[i,1])*((-1*BurnWit[i,j-1]*j)/t) # opposite of RCP4.5 effect
+DaysSpit[i,j] = round(DaysSpit[i,1])+round(DaysSpit[i,1])*((BurnSpit[i,j-1]*j)/t) # opposite of RCP4.5 effect
+DaysSuit[i,j] = round(DaysSuit[i,1])+round(DaysSuit[i,1])*((BurnSuit[i,j-1]*j)/t) #NOT multiplied -1 to keep burn effect positive
+}
+}
+}
+}
+# Total burn days
+TotalBurnDays[i,j] = round(DaysWit[i,j]) + round(DaysSpit[i,j]) + round(DaysSuit[i,j])
+# Change in total burn days
+ChangeBurnDays[i,j] = TotalBurnDays[i,j]/TotalBurnDays[i,1]
+# Probability of prescribed fire
+FireProbit[i,j] = rbeta(1,AFireProbi[i],BFireProbi[i])
+# Probability of prescribed fire, with climate-driven changes in burn window
+FireProbChangeit[i,j] = FireProbit[i,j]*ChangeBurnDays[i,j]
+# Probability of prescribed fire, with urbanization
+DistToUrban = pops$Urban_SLEUTH_Current_Distance_km[h]+(URB[[2]][h]*(j/t)) #
+if(DistToUrban <= 0){UrbanEffect=0} else{ #Urban effect on fire probability
+if(DistToUrban > 0 & DistToUrban < 3.2){UrbanEffect=DistToUrban/3.2} else {
+UrbanEffect=1
+}
+}
+FireProbUrbit[i,j] = FireProbChangeit[i,j]*UrbanEffect
+if(FireProbUrbit[i,j] >= 1) next
+# look at this
+# Prescribed fire (1 = yes; 0 = no)
+Fire[i,j] = rbinom(n=1, size=1, FireProbUrbit[i,j])
+# Fire effect on survival
+FireEffectij[i,j] = rbeta(1,AFireEffecti[i],BFireEffecti[i])
+### Demographic parameters
+# Probability of breeding
+Pfbt[i,j] = rbeta(1,APfbi[i],BPfbi[i])
+# Fecundity; modeled as a function of climate change
+Fit[i,j] = rlnorm(1,getParmsLognormForMoments(Fi[i]+Fslope*warming*j/t,sdF^2)[1],
+getParmsLognormForMoments(Fi[i]+Fslope*warming*j/t,sdF^2)[2])
+# Prob of nests surviving predation
+Pnst[i,j] = rbeta(1,APnsi[i],BPnsi[i])
+# Prob of egg hatching
+Pht[i,j] = rbeta(1,APhi[i],BPhi[i])
+# Proportion of eggs that are female
+PropFt[i,j] = rbeta(1,aPropF,bPropF)
+# Survival of hatchlings
+Sht[i,j] = rbeta(1,AShi[i],BShi[i])
+# Survival of juveniles
+Sjt[i,j] = rbeta(1,ASji[i],BSji[i])
+# Maturation rates
+Tjait[i,j] = 1/(rlnorm(1,getParmsLognormForMoments(Tjai[i]+Mslope*warming*j/t,sdTja^2)[1],
+getParmsLognormForMoments(Tjai[i]+Mslope*warming*j/t,sdTja^2)[2])-1)
+# calculated by 1 / (age of maturity - 1)
+# subtract one from denominator to remove hatchling year from juv stage
+# Adult survival for first three years
+if (j <= 3){Sat[i,j] = rbeta(1,ASai[i],BSai[i])} else {
+# Adult survival for years 4 and beyond; modeled as a function of year since last burn
+if (Fire[i,j] == 1){Sat[i,j] = rbeta(1,ASai[i],BSai[i])} else {
+if (Fire[i,j-1] == 1){Sat[i,j] = rbeta(1,ASai[i],BSai[i]) - FireEffectij[i,j]} else {
+if (Fire[i,j-2] == 1){Sat[i,j] = rbeta(1,ASai[i],BSai[i]) - 2*FireEffectij[i,j]} else {
+Sat[i,j] = rbeta(1,ASai[i],BSai[i]) - 3*FireEffectij[i,j]}}}}
+# Probability of immigration as a function of habitat
+if (mImm > 0) {
+Immt[i,j] = rbeta(1,AImmi[i],BImmi[i])*(PDHi[h]+(URB[[1]][h]*(j/t))+(SLR[[2]][h]*(j/t)))
+if (Immt[i,j] < 0){Immt[i,j] = 0}
+} else {
+Immt[i,j] = 0
+}
+# Apparent survival + immigration cannot exceed 1.0.
+#   If it does, make immigration probability = 1 - survival.
+#   This would assume not mortality, which is unlikely, but is a more realistic.
+if (Sat[i,j] + Immt[i,j] > 1) Immt[i,j] = 1 - Sat[i,j]
+# Effect of sea-level rise or low abundance; if elevation is <1 m asl
+#   force abundance and reproduction to zero (i.e., local extinction)
+if (elevit[i,j] < 0){density[i,j] = 0; Na[i,j] = 0; eggs[i,j]=0; Nj[i,j] = 0; Nimm[i,j] = 0} else {
+#if (Na[i,j] < MinFemales){density[i,j] = 0; Na[i,j] = 0; eggs[i,j]=0; Nj[i,j] = 0; Nimm[i,j] = 0} else {
+### Demographic population projection
+if (j>1) density[i,j] = (Na[i,j-1]+Nj[i,j-1])/(pops$Ac600m[h]*0.4047) #density = torts/ha = abun / ac*0.4047
+# Immigrants into the local population
+if (j>2) {
+if(pops$PopsPerMetapop[h] > 1){
+#Nimm[i,j] = round(((Nm[i,j-1]-(Na[i,j-1]+Nj[i,j-1]))/(pops$PopsPerMetapop[h]-1))*0.75*Immt[i,j])
+# No. immigrants = [metapopulation size minus size of local population)/number local pops minus the local population] times
+#   the proportion of adults in the local pop (assumed to be 0.75) times the immigration rate
+immPool = Nm[i,j-1]-(Na[i,j-1]+Nj[i,j-1])
+if (immPool < 0){immPool = 0}
+Nimm[i,j] <- rbinom(n=1, size=round((immPool/(pops$PopsPerMetapop[h]-1))*0.75), Immt[i,j])
+} else {
+#Nimm[i,j] = round(Nm[i,j-1]*0.75*Immt[i,j])
+Nimm[i,j] <- rbinom(n=1, size=round(Nm[i,j-1]*0.75), Immt[i,j])
+}
+}
+# Adults
+#KJL - fix density dependence issue for 3percent and dd versions
+if(version !="original"){densityDependence<-as.numeric(densityDependence)}
+if (j>1){ if (density[i,j-1] < densityDependence){
+Na[i,j] = round(Na[i,j-1]*Sat[i,j-1])+round(Nj[i,j-1]*Sjt[i,j-1]*Tjait[i,j-1])+round(Nimm[i,j-1])} else {
+Na[i,j] = round(Na[i,j-1]*Sat[i,j-1])+round(Nj[i,j-1]*Sjt[i,j-1]*Tjait[i,j-1]*0)+round(Nimm[i,j-1]*0)}}
+# Recruitment to adult state is density-dependent; if density exceeds a scenario-defined limit in females/ha, then
+# recruitment from the juvenile state and immigration becomes zero.
+# If number of females <3, force to extinction
+#if (j>1){if(Na[i,j-1] < 3){Na[i,j] = 0}}
+# Meta-population size
+#KJL replace LAM with LAM[i,j] so we keep track of these through time
+if (j>1) LAM[i,j] = Na[i,j]/Na[i,j-1]
+#KJL cap growth at 3% annually for metapopulation if version = 3percent
+if(version == "3percent"){
+if (j>1) {if(!is.na(LAM[i,j]) & (LAM[i,j]>1.03)) {LAM[i,j]<-1.03} }
+}
+if (j>1){if(is.na(LAM[i,j]) == FALSE & is.infinite(LAM[i,j]) == FALSE){Nm[i,j] = round(Nm[i,j-1]*LAM[i,j])} else {
+if(is.na(LAM[i,j]) == TRUE){Nm[i,j] = round(Nm[i,j-1]*1)} else {Nm[i,j] = round(Nm[i,j-1]*1)}}}
+# No. of eggs produced per year, while accounting for sex ratio
+eggs[i,j] = round(round(round(round(round(Na[i,j]*Pfbt[i,j])*Pnst[i,j])*Fit[i,j])*Pht[i,j])*PropFt[i,j])
+# No. of eggs is a product of:
+# no. of adults*prob breeding*prob nest surviving*fecundity/clutch*prob hatching*proportion of female hatchlings
+# Juveniles
+if (j>1) Nj[i,j] = round(Nj[i,j-1]*Sjt[i,j-1]*(1-Tjait[i,j-1])) + round(eggs[i,j-1]*Sht[i,j-1])
+# No. of juveniles is a product of:
+# No. of juveniles that survive and don't mature + no. of eggs that hatched and survive for one year
+#} # End-if < minFemales
+} # End-if < 3m above sea level
+# Calculate population growth rate
+if(j>1) lam[i,j] = (Na[i,j]+Nj[i,j])/(Na[i,j-1]+Nj[i,j-1])
+# Calculate extinction risk, the proportion of replicates that end w/ <3 females
+if (Na[i,j] < MinFemales) Pext[i,j]=1 else Pext[i,j]=0
+} # Close projection loop
+} # Close replication loop
+### KJL For each population * scenario, save individual replicate level data
+out<-data.frame(
+i=rep(1:r,80),
+j=floor(0:(80*r-1)/r)+1,
+scen=g,
+pop=h,
+Nj=as.vector(Nj),
+Na=as.vector(Na),
+Sa=as.vector(Sat),
+Sj=as.vector(Sjt),
+LAM=as.vector(LAM), #KJL: note, i changed this to be a matrix so each rep * timestep value is recorded
+Nm=as.vector(Nm),
+Nimm=as.vector(Nimm),
+density=as.vector(density),
+densitythresh=rep(densityDependence,length(as.vector(density)))
+)
+#KJL - make sure it's in ascending order of time and reps
+out<-out[with(out, order(i, j)),]
+outlist[[h]]<-out #save it to the outlist (should be 457 long at end, one for each pop)
+#KJL now save the output
+### For each population, save pertinent results in lists
+Variables = list(Nj, Na, Nj+Na, Nimm, Nm, density,
+Sht, Sjt, Sat, Tjai, Fit, eggs,
+elevit, Fire, FireProbit, FireProbChangeit, FireProbUrbit,
+ChangeBurnDays, TotalBurnDays, DaysWit, DaysSpit, DaysSuit,
+DistToUrban)
+names(Variables) = c("Nj", "Na", "N", "Nimm", "Nm", "Density",
+"Sh", "Sj", "Sa", "Tja", "Fec", "Eggs",
+"Elev", "Fire", "FireProb", "FireProbChange", "FireProbUrb",
+"ChangeBurnDays", "TotalBurnDays", "BurnDaysWi", "BurnDaysSp", "BurnDaysSu",
+"DistToUrban")
+PopVars[[h]] = Variables
+# This creates a massive list object with 626 entries (populations);
+# for each population, there are >20 sub-objects with 100x80 entries.
+# Saving this file will eat up multiple gigabites of storage. So, don't do this.
+# Examine this object at the end to make sure all objects are behaving as they should,
+# but don't save it with the other summarized results.
+### Calculate important parameters, and save them in arrays
+# Median initial population size
+Ni[h] = median(Nj[,1]) + median(Na[,1])
+# Mean fecundity
+meanF[h] = mean(Fi)
+# Mean age of sexual maturity
+meanTja[h] = mean(Tjai)
+# Total population size
+N = Na + Nj
+# Final median juvenile population size
+Njt[h] = median(Nj[,t])
+# Final median adult population size
+Nat[h] = median(Na[,t])
+# Final total population size at time t
+Nt[h] = median(Nj[,t])+median(Na[,t])
+NtLCL[h] = round(apply(as.data.frame(N[,t]),2,quantile,probs=c(0.075)))
+NtUCL[h] = round(apply(as.data.frame(N[,t]),2,quantile,probs=c(0.925)))
+# Median density at time t
+MedDensity[h] = (median(Nj[,t])+median(Na[,t]))/(pops$Ac600m[h]*0.4047)
+# Mean (yearly) lambda
+mlamda = apply(lam, 2, mean, na.rm=TRUE)
+# Overall average lambda among all years t
+meanlam[h] = mean(mlamda)
+# Extinction risk
+pe = apply(Pext,2,sum)/r
+PEt = pe[t]
+PE[h] = mean(Pext[,t])
+# Track the extinction likelihood for each population across any given year
+ExtinctionTracker[h,] = apply(Pext,2,sum)/r
+## Create objects summarizing abundance with confidence intervals through time
+# Median and CI of total population size through time
+Nmed[h,] = round(apply(N,2,median))
+Nlcl[h,] = round(apply(N,2,quantile,probs=c(0.075)))  #Lower 85%
+Nucl[h,] = round(apply(N,2,quantile,probs=c(0.925)))  #Upper 85%
+} # Close site-specific demographic loop
+dir.create(sprintf("%s/output",version),showWarnings = F)
+#dir.create("output_matrix_Nm",showWarnings = F)
+#dir.create(sprintf("%s/output_problems_Nm",version),showWarnings=F)
+saveRDS(outlist,file=paste0(version,"/output/scen-",g,".rds"))
+## Create objects summarizing results from each SITE
+## Bind projection results to original 'pops' object, and rename columns
+popsH = cbind(pops, meanF, meanTja, Ni, Njt, Nat, Nt, NtLCL, NtUCL, MedDensity, meanlam, PE)  # pops object saved for loop 'h'
+popsH = rename(popsH, c("meanF"="MeanFecundity", "meanTja"="MeanAgeMaturity",
+"Ni"="AbunInitial", "Njt"="AbunJuvProjected",
+"Nat"="AbunAdProjected", "Nt"="AbunProjected", "NtLCL"="AbunProjectedLCL","NtUCL"="AbunProjectedUCL",
+"MedDensity"="DensityMedian", "meanlam"="MeanLamda", "PE"="ProbExtinction"))
+# Save results of each scenario to ScenarioResults and ScenarioPopVars
+ScenarioResults[[g]] = popsH
+ScenarioPopVars[[g]] = PopVars
+## Save median abundance and CI in a list indexed by SCENARIO
+N_median[[g]] = Nmed
+N_lcl[[g]] = Nlcl
+N_ucl[[g]] = Nucl
+## Summarize results for each SCENARIO, bind them to 'scenParams' object,
+## and save in 'ScenSumm' object by indexing row 'g' and columns for variables
+reps = 100 # number of replicate for binomial simulations below
+MetaPopsExtant = matrix(NA,summary(pops$LandscapePopID)[6],100)
+MedianMetaPopsExtant = matrix(NA,summary(pops$LandscapePopID)[6],3) #median, LCL, UCL
+for (w in 1:t){
+ScenExtantTracker$ExtantMean[g,w] = median(replicate(reps, sum(rbinom(length(popsH[,1]), size=1, prob=1-ExtinctionTracker[,w])))) #Median of 100 simulations randomly drawing whether populations survive (1-ProbExtinction) and summing how many survive
+ScenExtantTracker$ExtantLCL[g,w] = apply(data.frame(replicate(reps,sum(rbinom(length(popsH[,1]), size=1, prob=1-ExtinctionTracker[,w])))),2,quantile,probs=c(0.075)) #LCL of 1000 simulations randomly drawing whether populations survive
+ScenExtantTracker$ExtantUCL[g,w] = apply(data.frame(replicate(reps,sum(rbinom(length(popsH[,1]), size=1, prob=1-ExtinctionTracker[,w])))),2,quantile,probs=c(0.925)) #LCL of 1000 simulations randomly drawing whether populations survive
+}
+# Overall results
+ScenSumm[g,"PopsTi"] = dim(popsH)[1] #Total number of populations modeled
+ScenSumm[g,"PopsTt"] = median(replicate(reps, sum(rbinom(length(popsH[,1]), size=1, prob=1-popsH$ProbExtinction)))) #Median of 100 simulations randomly drawing whether populations survive (1-ProbExtinction) and summing how many survive
+ScenSumm[g,"PopsTtLCL"] = apply(data.frame(replicate(reps,sum(rbinom(length(popsH[,1]), size=1, prob=1-popsH$ProbExtinction)))),2,quantile,probs=c(0.075)) #LCL of 1000 simulations randomly drawing whether populations survive (1-ProbExtinction) and summing how many survive
+ScenSumm[g,"PopsTtUCL"] = apply(data.frame(replicate(reps,sum(rbinom(length(popsH[,1]), size=1, prob=1-popsH$ProbExtinction)))),2,quantile,probs=c(0.925)) #UCL of 1000 simulations randomly drawing whether populations survive (1-ProbExtinction) and summing how many survive
+ScenSumm[g,"PopsTDelta"] = ((ScenSumm[g,"PopsTt"]-ScenSumm[g,"PopsTi"])/ScenSumm[g,"PopsTi"])*100 # Percent change in number of populations during projection interval
+ScenSumm[g,"NToti"] = round(sum(popsH$AbunInitial)) #Total number of tortoises modeled
+ScenSumm[g,"NTott"] = round(sum(popsH$AbunProjected)) #Total number of tortoise projected after interval
+ScenSumm[g,"NTottLCL"] = round(sum(popsH$AbunProjectedLCL)) #LCL of total number of tortoises projected
+ScenSumm[g,"NTottUCL"] = round(sum(popsH$AbunProjectedUCL)) #UCL of total number of tortoises projected
+ScenSumm[g,"NTottDelta"] = ((ScenSumm[g,"NTott"]-ScenSumm[g,"NToti"])/ScenSumm[g,"NToti"])*100 # Percent change in number of tortoise over projection interval
+ScenSumm[g,"NMetaI"] = length(table(popsH$LandscapePopID)) #Total number of metapopulations modeled
+for (m in 1:summary(popsH$LandscapePopID)[6]){
+mpop = subset(popsH, popsH$LandscapePopID == m)
+MetaPopsExtant[m,] = replicate(reps, sum(rbinom(length(mpop[,1]), size=1, prob=1-mpop$ProbExtinction)))}
+MetaPopsExtant[MetaPopsExtant > 0] = 1
+for (m in 1:summary(popsH$LandscapePopID)[6]){
+MedianMetaPopsExtant[m,1] = median(MetaPopsExtant[m,]) #Median
+MedianMetaPopsExtant[m,2] = summary(MetaPopsExtant[m,])[2] #1Q
+MedianMetaPopsExtant[m,3] = summary(MetaPopsExtant[m,])[5]} #3Q
+ScenSumm[g,"NMetaT"] = sum(MedianMetaPopsExtant[,1]) #Median total number of metapopulations surviving
+ScenSumm[g,"NMetaTLCL"] = round(sum(MedianMetaPopsExtant[,2])) #1Q total number of metapopulations surviving
+ScenSumm[g,"NMetaTUCL"] = round(sum(MedianMetaPopsExtant[,3])) #3Q total number of metapopulations surviving
+ScenSumm[g,"NMetaTDelta"] = ((ScenSumm[g,"NMetaT"]-ScenSumm[g,"NMetaI"])/ScenSumm[g,"NMetaI"])*100 # Percent change in number of metapopulations
+ScenSumm[g,"Extant"] = length(subset(popsH, 1-popsH$ProbExtinction >= 0.95)[,1])
+ScenSumm[g,"VLikelyExtant"] = length(subset(popsH, 1-popsH$ProbExtinction < 0.949 & 1-popsH$ProbExtinction >= 0.80)[,1])
+ScenSumm[g,"LikelyExtant"] = length(subset(popsH, 1-popsH$ProbExtinction < 0.799 & 1-popsH$ProbExtinction >= 0.5)[,1])
+ScenSumm[g,"UnlikelyExtant"] = length(subset(popsH, 1-popsH$ProbExtinction < 0.5)[,1])
+ScenSumm[g,"ExtantPerc"] = ScenSumm[g,"Extant"]/ScenSumm[g,"PopsTi"]
+ScenSumm[g,"VLikelyExtantPerc"] = ScenSumm[g,"VLikelyExtant"]/ScenSumm[g,"PopsTi"]
+ScenSumm[g,"LikelyExtantPerc"] = ScenSumm[g,"LikelyExtant"]/ScenSumm[g,"PopsTi"]
+ScenSumm[g,"UnlikelyExtantPerc"] = ScenSumm[g,"UnlikelyExtant"]/ScenSumm[g,"PopsTi"]
+# Perform the same calculations as above, but for each genetic representation unit (i.e., Analysis Units)
+units = max(pops$GeneticUnits)
+for (u in 1:units){
+unit = subset(popsH, popsH$GeneticUnits == u)
+MetaPopsExtantUnit = matrix(NA,summary(unit$LandscapePopID)[6],100)
+MedianMetaPopsExtantUnit = matrix(NA,summary(unit$LandscapePopID)[6],3) #median, LCL, UCL
+ScenSummUnits[[u]][g,"PopsTi"] = dim(unit)[1]
+ScenSummUnits[[u]][g,"PopsTt"] = round(sum(1-unit$ProbExtinction))
+ScenSummUnits[[u]][g,"PopsTtLCL"] = apply(data.frame(replicate(1000,sum(rbinom(length(unit[,1]), size=1, prob=1-unit$ProbExtinction)))),2,quantile,probs=c(0.075)) #LCL of 1000 simulations randomly drawing whether populations survive (1-ProbExtinction) and summing how many survive
+ScenSummUnits[[u]][g,"PopsTtUCL"] = apply(data.frame(replicate(1000,sum(rbinom(length(unit[,1]), size=1, prob=1-unit$ProbExtinction)))),2,quantile,probs=c(0.925)) #UCL of 1000 simulations randomly drawing whether populations survive (1-ProbExtinction) and summing how many survive
+ScenSummUnits[[u]][g,"PopsTDelta"] = ((ScenSummUnits[[u]][g,"PopsTt"]-ScenSummUnits[[u]][g,"PopsTi"])/ScenSummUnits[[u]][g,"PopsTi"])*100
+ScenSummUnits[[u]][g,"NMetaI"] = length(table(unit$LandscapePopID)) #Total number of metapopulations modeled
+for (m in 1:summary(unit$LandscapePopID)[6]){
+mpop = subset(unit, unit$LandscapePopID == m)
+MetaPopsExtantUnit[m,] = replicate(reps, sum(rbinom(length(mpop[,1]), size=1, prob=1-mpop$ProbExtinction)))}
+MetaPopsExtantUnit[MetaPopsExtantUnit > 0] = 1
+for (m in 1:summary(unit$LandscapePopID)[6]){
+MedianMetaPopsExtantUnit[m,1] = median(MetaPopsExtantUnit[m,]) #Median
+MedianMetaPopsExtantUnit[m,2] = summary(MetaPopsExtantUnit[m,])[2] #1Q
+MedianMetaPopsExtantUnit[m,3] = summary(MetaPopsExtantUnit[m,])[5]} #3Q
+ScenSummUnits[[u]][g,"NMetaT"] = sum(MedianMetaPopsExtantUnit[,1]) #Median total number of metapopulations surviving
+ScenSummUnits[[u]][g,"NMetaTLCL"] = sum(MedianMetaPopsExtantUnit[,2]) #1Q total number of metapopulations surviving
+ScenSummUnits[[u]][g,"NMetaTUCL"] = sum(MedianMetaPopsExtantUnit[,3]) #3Q total number of metapopulations surviving
+ScenSummUnits[[u]][g,"NMetaTDelta"] = ((ScenSummUnits[[u]][g,"NMetaT"]-ScenSummUnits[[u]][g,"NMetaI"])/ScenSummUnits[[u]][g,"NMetaI"])*100 #change in number of metapopulations
+ScenSummUnits[[u]][g,"NToti"] = round(sum(unit$AbunInitial))
+ScenSummUnits[[u]][g,"NTott"] = round(sum(unit$AbunProjected))
+ScenSummUnits[[u]][g,"NTottLCL"] = round(sum(unit$AbunProjectedLCL)) #LCL of total number of tortoises projected
+ScenSummUnits[[u]][g,"NTottUCL"] = round(sum(unit$AbunProjectedUCL)) #UCL of total number of tortoises projected
+ScenSummUnits[[u]][g,"NTottDelta"] = ((ScenSummUnits[[u]][g,"NTott"]-ScenSummUnits[[u]][g,"NToti"])/ScenSummUnits[[u]][g,"NToti"])*100
+ScenSummUnits[[u]][g,"Extant"] = length(subset(unit, 1-unit$ProbExtinction > 0.95)[,1])
+ScenSummUnits[[u]][g,"VLikelyExtant"] = length(subset(unit, 1-unit$ProbExtinction < 0.949 & 1-unit$ProbExtinction >= 0.80)[,1])
+ScenSummUnits[[u]][g,"LikelyExtant"] = length(subset(unit, 1-unit$ProbExtinction < 0.799 & 1-unit$ProbExtinction >= 0.5)[,1])
+ScenSummUnits[[u]][g,"UnlikelyExtant"] = length(subset(unit, 1-unit$ProbExtinction < 0.5)[,1])
+ScenSummUnits[[u]][g,"ExtantPerc"] = ScenSummUnits[[u]][g,"Extant"]/ScenSummUnits[[u]][g,"PopsTi"]
+ScenSummUnits[[u]][g,"VLikelyExtantPerc"] = ScenSummUnits[[u]][g,"VLikelyExtant"]/ScenSummUnits[[u]][g,"PopsTi"]
+ScenSummUnits[[u]][g,"LikelyExtantPerc"] = ScenSummUnits[[u]][g,"LikelyExtant"]/ScenSummUnits[[u]][g,"PopsTi"]
+ScenSummUnits[[u]][g,"UnlikelyExtantPerc"] = ScenSummUnits[[u]][g,"UnlikelyExtant"]/ScenSummUnits[[u]][g,"PopsTi"]
+}
+# Track progress looping through scenarios for
+if (g %in% 1:length(Scenarios[,1])){print((g/length(Scenarios[,1]))*100); print("%")}
+} # Close the scenario loop
+# Save the results as a list
+ScenSummTotal = cbind(Scenarios, ScenSumm)
+row.names(ScenExtantTracker$ExtantMean) = c(ScenSummTotal[,1])
+row.names(ScenExtantTracker$ExtantLCL) = c(ScenSummTotal[,1])
+row.names(ScenExtantTracker$ExtantUCL) = c(ScenSummTotal[,1])
+#RESULTS = list(ScenSummTotal, ScenSummStates, ScenSummUnits, ScenarioResults, ScenExtantTracker)
+RESULTS = list(ScenSummTotal, ScenSummUnits, ScenExtantTracker, ScenarioResults)
+names(RESULTS) = c("ScenSummTotal", "ScenSummUnits", "ScenPopsExtantTracker", "ScenarioResults")
+names(RESULTS$ScenarioResults) = RESULTS$ScenSummTotal[,1]
+#KJL save results to version folder
+saveRDS(RESULTS, paste0(version,"/pva-output-results-",t,"yr.rds"))
+#### Runtimes:
+#### for t = 80, takes about ~2.1 hours
+} # End interval
+ScenSumm[g,"PopsTi"]
+ScenSumm[g,"PopsTt"]
+g
+popsH
+Nmed
+dim(Nmed)
+popsH
+ScenSumm[26,"NTott"]
+####
+### Examine summaries for all scenarios
+# KJL read results from version folder
+results = readRDS(paste0(version,"/pva-output-results-80yr.rds"))
+ScenSummTotal = results[[1]]
+ScenSummUnits = results[[2]]
+ScenExtantTracker= results[[3]]
+ScenarioResults= results[[4]]
+## Examine summaries by genetic analysis unit
+head(ScenSummUnits[[1]]) # 1 - LA+MS+AL
+head(ScenSummUnits[[2]]) # 2 - AL/FL
+head(ScenSummUnits[[3]]) # 3 - west GA
+head(ScenSummUnits[[4]]) # 4 - east GA/SC
+head(ScenSummUnits[[5]]) # 5 - peninsular FL
+## Examine individual scenarios and their predictions for each population
+## e.g, scenario 1 (low threats)
+head(ScenarioResults[[1]],10)
+# Read in results of the population projections
+# KJL read results from version folder
+RESULTS80 = readRDS(paste0(version,"/pva-output-results-",80,"yr.rds"))
+names(RESULTS80$ScenarioResults) = RESULTS80$ScenSummTotal[,1]
+head(RESULTS80)
+head(RESULTS80$ScenSummTotal) #Scenarios
+head(RESULTS80$ScenSummUnits) #Genetic units
+head(RESULTS80$ScenPopsExtantTracker) #Extinction tracker by scenario
+head(RESULTS80$ScenarioResults) #Results for each population in each scenario
+ScenSummTotal = RESULTS80[[1]]
+ScenSummUnits = RESULTS80[[2]]
+ScenExtantTracker= RESULTS80[[3]]
+ScenarioResults= RESULTS80[[4]]
+### Create a table that lists the scenarios analyzed by the model
+table2 = RESULTS80$ScenSummTotal[,1]
+# Copy and paste table into Excel for more formal formatting
+write_clip(table2)
+### Create a table that summarizes results of model predictions for each scenario
+###   at 80 years into the future
+table3 = RESULTS80$ScenSummTotal[,c("Scenario", "NToti","NTott","NTottLCL","NTottUCL","NTottDelta",
+"PopsTi","PopsTt","PopsTtLCL","PopsTtUCL","PopsTDelta",
+"NMetaI","NMetaT","NMetaTLCL","NMetaTUCL","NMetaTDelta")]
+table3
+N
+median(Nj[,t])+median(Na[,t])
+median(Nj[,t] + Na[,t])
+dummy1<-rand(5)
+sample(1:100,size=5)
+dummy1<-sample(1:100,size=10)
+dummy2<-sample(1:100,size=10)
+median(dummy1)+median(dummy2)
+median(dummy1+dummy2)
+aPropF
+bPropF
+PropF
+Sjt
+Sji
+Nt
+Pfb
+ABurnWi
+BBurnWi
+elevi
